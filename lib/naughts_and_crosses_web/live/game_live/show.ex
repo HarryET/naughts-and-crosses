@@ -90,6 +90,11 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
   end
 
   @impl true
+  def handle_event("warn-wait", _params, socket) do
+    {:noreply, socket |> put_flash(:warning, "It's not your turn yet.")}
+  end
+
+  @impl true
   def handle_event("claim", %{"row" => row, "col" => col}, socket) do
     me = socket.assigns[:me]
     piece = socket.assigns[:piece]
