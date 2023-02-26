@@ -6,7 +6,7 @@ defmodule NaughtsAndCrosses.Games.GameCol do
   @foreign_key_type Ecto.UUID
 
   embedded_schema do
-    field :pos, :integer
+    field(:pos, :integer)
 
     field(:status, Ecto.Enum, values: [:naught, :cross, :empty])
   end
@@ -25,9 +25,9 @@ defmodule NaughtsAndCrosses.Games.GameRow do
   @foreign_key_type Ecto.UUID
 
   embedded_schema do
-    field :pos, :integer
+    field(:pos, :integer)
 
-    embeds_many :cols, NaughtsAndCrosses.Games.GameCol
+    embeds_many(:cols, NaughtsAndCrosses.Games.GameCol)
   end
 
   def changeset(board, attrs) do
@@ -44,13 +44,13 @@ defmodule NaughtsAndCrosses.Games.Game do
   import Ecto.Changeset
 
   schema "games" do
-    field :crosses, :integer
-    field :naught, :integer
+    field(:crosses, :integer)
+    field(:naught, :integer)
 
-    field :next, Ecto.Enum, values: [:naught, :cross, :none]
-    field :winner, Ecto.Enum, values: [:naught, :cross, :tie, :none]
+    field(:next, Ecto.Enum, values: [:naught, :cross, :none])
+    field(:winner, Ecto.Enum, values: [:naught, :cross, :tie, :none])
 
-    embeds_many :rows, NaughtsAndCrosses.Games.GameRow
+    embeds_many(:rows, NaughtsAndCrosses.Games.GameRow)
 
     timestamps()
   end
@@ -58,7 +58,7 @@ defmodule NaughtsAndCrosses.Games.Game do
   @doc false
   def changeset(game, attrs) do
     game
-    |> cast(attrs, [:id, :naught, :crosses, :next])
+    |> cast(attrs, [:id, :naught, :crosses, :next, :winner])
     |> cast_embed(:rows)
     |> validate_required([:next])
   end

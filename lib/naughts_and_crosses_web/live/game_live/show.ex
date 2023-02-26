@@ -238,6 +238,8 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
   defp check_for_winner(game, me, socket) do
     winner = NaughtsAndCrosses.Gamehelper.get_winner(Enum.map(game.rows, fn row -> row.cols end))
 
+    IO.inspect(winner)
+
     case winner do
       :none ->
         socket
@@ -247,6 +249,15 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
              |> Game.changeset(%{next: :none, winner: :naught})
              |> Repo.update() do
           {:ok, new_game} ->
+            NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+              self(),
+              "game:#{game.id}",
+              "game_update",
+              %{
+                game: new_game
+              }
+            )
+
             socket
             |> assign(:game, new_game)
             |> assign(:playing, new_game.naught == me || new_game.crosses == me)
@@ -278,6 +289,15 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
              |> Game.changeset(%{next: :none, winner: :cross})
              |> Repo.update() do
           {:ok, new_game} ->
+            NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+              self(),
+              "game:#{game.id}",
+              "game_update",
+              %{
+                game: new_game
+              }
+            )
+
             socket
             |> assign(:game, new_game)
             |> assign(:playing, new_game.naught == me || new_game.crosses == me)
@@ -309,6 +329,15 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
              |> Game.changeset(%{next: :none, winner: :tie})
              |> Repo.update() do
           {:ok, new_game} ->
+            NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+              self(),
+              "game:#{game.id}",
+              "game_update",
+              %{
+                game: new_game
+              }
+            )
+
             socket
             |> assign(:game, new_game)
             |> assign(:playing, new_game.naught == me || new_game.crosses == me)
@@ -328,7 +357,7 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
               :my_go,
               false
             )
-            |> put_flash(:info, "Crosses Won!")
+            |> put_flash(:info, "It is a tie!")
 
           {:error, err} ->
             IO.inspect(err)

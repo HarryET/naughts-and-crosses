@@ -1,5 +1,5 @@
 <div class="space-y-24">
-  <%= if @playing || @game.winner do %>
+  <%= if @playing || @game.winner != :none do %>
     <div class="space-y-8">
       <.header>
         Game Info

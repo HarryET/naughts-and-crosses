@@ -5,8 +5,8 @@ defmodule NaughtsAndCrosses.Gamehelper do
   def get_lines(board) do
     board ++
       ListHelper.get_columns(board) ++
-      ListHelper.get_diagonal_1(board) ++
-      ListHelper.get_diagonal_2(board)
+      [ListHelper.get_diagonal_1(board)] ++
+      [ListHelper.get_diagonal_2(board)]
   end
 
   def get_winner(board) do
