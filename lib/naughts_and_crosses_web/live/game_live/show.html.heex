@@ -1,0 +1,95 @@
+<div class="space-y-24">
+  <%= if @playing || @game.winner do %>
+    <div class="space-y-8">
+      <.header>
+        Game Info
+      </.header>
+
+      <div>
+        <dl class="-my-4 divide-y divide-zinc-100">
+          <%= if @playing do %>
+            <div class="flex gap-4 py-4 sm:gap-8">
+              <dt class="w-1/4 flex-none text-[0.8125rem] leading-6 text-zinc-500">Who am I?</dt>
+              <dd class="text-sm leading-6 text-zinc-700">
+                <%= if @piece == :naught do
+                  "Naught"
+                else
+                  "Crosses"
+                end %>
+              </dd>
+            </div>
+            <div class="flex gap-4 py-4 sm:gap-8">
+              <dt class="w-1/4 flex-none text-[0.8125rem] leading-6 text-zinc-500">
+                Is it my turn?
+              </dt>
+              <dd class="text-sm leading-6 text-zinc-700">
+                <%= if @my_go do
+                  "Yes"
+                else
+                  "No"
+                end %>
+              </dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @game.winner != :none do %>
+    <.header>
+      Winner
+      <:subtitle>
+        <%= if @game.winner == :naught do %>
+          This game was won by <span class="font-bold text-zinc-800">Naughts</span>
+        <% else %>
+          <%= if @game.winner == :cross do %>
+            This game was won by <span class="font-bold text-zinc-800">Crosses</span>
+          <% else %>
+            This game was a draw
+          <% end %>
+        <% end %>
+      </:subtitle>
+    </.header>
+  <% end %>
+
+  <%!-- Display board for game.rows, where it should be ordered by the pos property and then render each col --%>
+  <div class="space-y-16">
+    <.header>
+      Board
+      <:subtitle>
+        The board for the current game. If there is a space avaliable in this game then selecting a space will make a move & assign you to that place.
+      </:subtitle>
+    </.header>
+    <div class="flex flex-col space-y-1 bg-gray-200 w-min">
+      <%= for row <- @game.rows do %>
+        <div class="flex flex-row space-x-1">
+          <%= for col <- row.cols do %>
+            <div
+              id={"row-#{row.pos}-col-#{col.pos}"}
+              class="w-24 h-24 bg-white flex items-center content-center justify-center"
+            >
+              <%= if col.status == :empty do %>
+                <div
+                  phx-click="claim"
+                  phx-value-row={row.pos}
+                  phx-value-col={col.pos}
+                  class="w-full h-full hover:bg-gray-100 hover:cursor-pointer"
+                >
+                </div>
+              <% else %>
+                <div class="w-full h-full flex items-center justify-center p-4">
+                  <%= if col.status == :naught do %>
+                    <div class="w-full h-full rounded-full bg-yellow-500"></div>
+                  <% else %>
+                    <Heroicons.x_mark class="w-full h-full text-red-500" />
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

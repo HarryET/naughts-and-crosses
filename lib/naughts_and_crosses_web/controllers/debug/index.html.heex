@@ -1,0 +1,10 @@
+<div class="space-y-4">
+  <h1 class="text-xl">Debug Info</h1>
+  <div>
+    <%= for key <- @keys do %>
+      <p class="text-gray-600">
+        <span class="font-bold text-gray-800"><%= key %>:</span> <%= @conn.assigns[key] %>
+      </p>
+    <% end %>
+  </div>
+</div>
