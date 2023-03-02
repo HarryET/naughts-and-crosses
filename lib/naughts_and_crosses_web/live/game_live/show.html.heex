@@ -50,6 +50,9 @@
           <% end %>
         <% end %>
       </:subtitle>
+      <:actions>
+        <.button phx-click="rematch">Rematch</.button>
+      </:actions>
     </.header>
   <% end %>
 
@@ -70,20 +73,16 @@
               class="w-24 h-24 bg-white flex items-center content-center justify-center"
             >
               <%= if col.status == :empty do %>
-                <% if @my_go == true do %>
-                <div
-                  phx-click="claim"
-                  phx-value-row={row.pos}
-                  phx-value-col={col.pos}
-                  class="w-full h-full hover:bg-gray-100 hover:cursor-pointer"
-                >
-                </div>
+                <%= if @my_go == true || @can_join == true do %>
+                  <div
+                    phx-click="claim"
+                    phx-value-row={row.pos}
+                    phx-value-col={col.pos}
+                    class="w-full h-full hover:bg-gray-100 hover:cursor-pointer"
+                  >
+                  </div>
                 <% else %>
-                <div
-                  phx-click="warn-wait"
-                  class="w-full h-full"
-                >
-                </div>
+                  <div phx-click="warn-wait" class="w-full h-full"></div>
                 <% end %>
               <% else %>
                 <div class="w-full h-full flex items-center justify-center p-4">

@@ -8,13 +8,18 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
   @impl true
   def mount(%{"id" => id} = _params, %{"user_id" => user_id} = _session, socket) do
     NaughtsAndCrossesWeb.Endpoint.subscribe("game:#{id}")
+    NaughtsAndCrossesWeb.Endpoint.subscribe("rematches")
 
     {:ok, socket |> assign(:user_id, user_id) |> assign(:line, false)}
   end
 
   @impl true
-  def handle_params(%{"id" => id}, _, socket) do
+  def handle_params(%{"id" => id}, uri, socket) do
     me = socket.assigns[:user_id]
+
+    %URI{
+      path: path
+    } = URI.parse(uri)
 
     with %Game{} = game <- Games.get_game(id) do
       {:noreply,
@@ -22,6 +27,7 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
        |> assign(:page_title, "Play Game")
        |> assign(:game, game)
        |> assign(:playing, game.naught == me || game.crosses == me)
+       |> assign(:can_join, game.naught != me && game.crosses != me)
        |> assign(
          :piece,
          if game.naught == me do
@@ -46,11 +52,26 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
            end
          end
        )
-       |> assign(:me, me)}
+       |> assign(:me, me)
+       |> assign(:__path__, path)}
     else
       e ->
         IO.inspect(e)
         {:noreply, socket |> put_flash(:error, "Failed to find game") |> redirect(to: ~p"/")}
+    end
+  end
+
+  @impl true
+  def handle_info(%{event: "put_flash", payload: %{msg: msg, type: type} = _} = _, socket) do
+    {:noreply, socket |> put_flash(type, msg)}
+  end
+
+  @impl true
+  def handle_info(%{event: "redirect", payload: %{to: to, prev: from} = _} = _, socket) do
+    if socket.assigns[:__path__] == from do
+      {:noreply, redirect(socket, to: to)}
+    else
+      {:noreply, socket}
     end
   end
 
@@ -63,6 +84,7 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
      socket
      |> assign(:game, game)
      |> assign(:playing, game.naught == me || game.crosses == me)
+     |> assign(:can_join, game.naught != me && game.crosses != me)
      |> assign(
        :piece,
        if game.naught == me do
@@ -92,6 +114,51 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
   @impl true
   def handle_event("warn-wait", _params, socket) do
     {:noreply, socket |> put_flash(:warning, "It's not your turn yet.")}
+  end
+
+  @impl true
+  def handle_event("rematch", _params, socket) do
+    current_game = socket.assigns[:game]
+
+    rows =
+      for x <- 1..3,
+          do: %{
+            pos: x,
+            cols:
+              for(
+                y <- 1..3,
+                do: %{
+                  pos: y,
+                  status: :empty
+                }
+              )
+          }
+
+    with {:ok, game} <-
+           %Game{
+             crosses: current_game.naught,
+             naught: current_game.crosses,
+             next: :naught,
+             rows: rows,
+             winner: :none
+           }
+           |> Repo.insert() do
+      NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+        self(),
+        "rematches",
+        "redirect",
+        %{
+          prev: ~p"/games/#{current_game.id}",
+          to: ~p"/games/#{game.id}"
+        }
+      )
+
+      {:noreply, redirect(socket, to: ~p"/games/#{game.id}")}
+    else
+      e ->
+        IO.inspect(e)
+        {:noreply, socket |> put_flash(:error, "Failed to start a re-match.")}
+    end
   end
 
   @impl true
@@ -208,6 +275,7 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
           socket
           |> assign(:game, new_game)
           |> assign(:playing, new_game.naught == me || new_game.crosses == me)
+          |> assign(:can_join, game.naught != me && game.crosses != me)
           |> assign(
             :piece,
             if new_game.naught == me do
@@ -263,9 +331,20 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
               }
             )
 
+            NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+              self(),
+              "game:#{game.id}",
+              "put_flash",
+              %{
+                msg: "Naughts Won!",
+                type: :info
+              }
+            )
+
             socket
             |> assign(:game, new_game)
             |> assign(:playing, new_game.naught == me || new_game.crosses == me)
+            |> assign(:can_join, game.naught != me && game.crosses != me)
             |> assign(
               :piece,
               if new_game.naught == me do
@@ -303,9 +382,20 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
               }
             )
 
+            NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+              self(),
+              "game:#{game.id}",
+              "put_flash",
+              %{
+                msg: "Crosses Won!",
+                type: :info
+              }
+            )
+
             socket
             |> assign(:game, new_game)
             |> assign(:playing, new_game.naught == me || new_game.crosses == me)
+            |> assign(:can_join, game.naught != me && game.crosses != me)
             |> assign(
               :piece,
               if new_game.naught == me do
@@ -343,9 +433,20 @@ defmodule NaughtsAndCrossesWeb.GameLive.Show do
               }
             )
 
+            NaughtsAndCrossesWeb.Endpoint.broadcast_from(
+              self(),
+              "game:#{game.id}",
+              "put_flash",
+              %{
+                msg: "It is a tie!",
+                type: :info
+              }
+            )
+
             socket
             |> assign(:game, new_game)
             |> assign(:playing, new_game.naught == me || new_game.crosses == me)
+            |> assign(:can_join, game.naught != me && game.crosses != me)
             |> assign(
               :piece,
               if new_game.naught == me do
